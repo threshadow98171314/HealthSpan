@@ -1,0 +1,7 @@
+# 健康數據只放在私人倉庫 HealthSpan-data，絕對不要提交到這個公開倉庫
+data/
+*.json
+!package.json
+
+# 本機開發設定
+.claude/

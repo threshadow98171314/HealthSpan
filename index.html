@@ -1,0 +1,52 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="description" content="HealthSpan：個人健康數據、AI 分析與訓練紀錄">
+  <meta name="robots" content="noindex">
+  <title>HealthSpan</title>
+  <script>
+    // 先套用主題，避免載入時閃一下淺色
+    (function () {
+      var t = null;
+      try { t = localStorage.getItem('healthspan:theme'); } catch (e) {}
+      document.documentElement.dataset.theme = t || (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
+    })();
+  </script>
+  <link rel="stylesheet" href="css/app.css">
+</head>
+<body>
+  <div id="gate" class="gate" hidden></div>
+
+  <div class="app" hidden>
+    <aside class="sidebar">
+      <div class="brand"><span class="brand-mark">H</span>HealthSpan</div>
+      <nav class="nav" aria-label="主選單"></nav>
+      <div class="side-actions">
+        <span class="sync" data-sync></span>
+        <button type="button" class="btn ghost" data-export></button>
+        <button type="button" class="btn ghost" data-theme-toggle></button>
+        <button type="button" class="btn ghost" data-lock></button>
+      </div>
+    </aside>
+
+    <div>
+      <header class="topbar">
+        <div class="brand"><span class="brand-mark">H</span>HealthSpan</div>
+        <div class="btn-row">
+          <span class="sync" data-sync></span>
+          <button type="button" class="icon-btn" data-export aria-label="匯出與備份"></button>
+          <button type="button" class="icon-btn" data-theme-toggle></button>
+          <button type="button" class="icon-btn" data-lock aria-label="鎖定"></button>
+        </div>
+      </header>
+      <main class="main" id="view"></main>
+    </div>
+  </div>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+  <script src="js/remote.js"></script>
+  <script src="js/boot.js"></script>
+</body>
+</html>
