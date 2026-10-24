@@ -77,18 +77,38 @@
     return res;
   }
 
+  async function getText(token, path) {
+    const meta = await (await call(token, path)).json();
+    // 超過 1 MB 的檔案 API 不回傳內容，改抓原始檔
+    const text = meta.encoding === 'base64' && meta.content
+      ? dec.decode(unb64(meta.content.replace(/\n/g, '')))
+      : await (await call(token, path, {}, 'application/vnd.github.raw+json')).text();
+    return { text, sha: meta.sha };
+  }
+
   async function getFile(token, path, { allowMissing } = {}) {
     try {
-      const meta = await (await call(token, path)).json();
-      // 超過 1 MB 的檔案 API 不回傳內容，改抓原始檔
-      const text = meta.encoding === 'base64' && meta.content
-        ? dec.decode(unb64(meta.content.replace(/\n/g, '')))
-        : await (await call(token, path, {}, 'application/vnd.github.raw+json')).text();
-      return { json: JSON.parse(text), sha: meta.sha };
+      const { text, sha } = await getText(token, path);
+      return { json: JSON.parse(text), sha };
     } catch (e) {
       if (allowMissing && e.status === 404) return { json: null, sha: null };
       throw e;
     }
+  }
+
+  // 列出資料夾內的檔案；資料夾不存在時回傳空陣列
+  async function listDir(token, path) {
+    try {
+      const items = await (await call(token, path)).json();
+      return Array.isArray(items) ? items : [];
+    } catch (e) {
+      if (e.status === 404) return [];
+      throw e;
+    }
+  }
+
+  async function deleteFile(token, path, sha, message) {
+    await call(token, path, { method: 'DELETE', body: JSON.stringify({ message, sha, branch: CFG.branch }), headers: { 'Content-Type': 'application/json' } });
   }
 
   async function putFile(token, path, json, sha, message) {
@@ -98,5 +118,5 @@
     return (await res.json()).content.sha;
   }
 
-  window.HSRemote = { CFG, vault, session, getFile, putFile, RemoteError };
+  window.HSRemote = { CFG, vault, session, getText, getFile, putFile, listDir, deleteFile, RemoteError };
 })();

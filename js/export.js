@@ -76,10 +76,22 @@
   }
 
   function sleepMd() {
+    const parts = [];
+    const h = HS.health ? HS.health.data() : null;
+    const time = (iso) => { const d = new Date(iso); return `${HS.pad2(d.getHours())}:${HS.pad2(d.getMinutes())}`; };
+    const hr = (m) => (m / 60).toFixed(1);
+    if (h && h.nights.length) {
+      parts.push('## 睡眠：Apple Watch（新到舊，單位小時）', table(['日期（起床）', '入睡', '起床', '睡眠', '深層', '核心', '快速動眼', '清醒'],
+        h.nights.slice().reverse().map((n) => [n.date, time(n.start), time(n.end), hr(n.asleepMin), n.staged ? hr(n.deepMin) : '—', n.staged ? hr(n.coreMin) : '—', n.staged ? hr(n.remMin) : '—', hr(n.awakeMin)])));
+    }
+    if (h && h.restingHR.length) parts.push('### 靜止心率（次／分）', table(['日期', '靜止心率'], h.restingHR.slice().reverse().map((x) => [x.date, x.bpm])));
+    if (h && h.hrv.length) parts.push('### HRV（ms，當日平均）', table(['日期', 'HRV', '樣本數'], h.hrv.slice().reverse().map((x) => [x.date, x.ms, x.n])));
     const list = HS.store.list('sleep');
-    if (!list.length) return '## 睡眠紀錄\n\n尚無資料。';
-    return ['## 睡眠紀錄（新到舊）', table(['日期（起床）', '就寢', '起床', '時數', '品質 1–5', '夜醒', '備註'],
-      list.map((e) => [e.date, e.bedtime, e.wake, HS.sleep.hoursOf(e).toFixed(1), dash(e.quality), dash(e.awakenings), dash(e.notes)]))].join('\n\n');
+    if (list.length) {
+      parts.push('## 睡眠：手動紀錄（新到舊）', table(['日期（起床）', '就寢', '起床', '時數', '品質 1–5', '夜醒', '備註'],
+        list.map((e) => [e.date, e.bedtime, e.wake, HS.sleep.hoursOf(e).toFixed(1), dash(e.quality), dash(e.awakenings), dash(e.notes)])));
+    }
+    return parts.length ? parts.join('\n\n') : '## 睡眠紀錄\n\n尚無資料。';
   }
 
   function analysisMd() {
@@ -114,6 +126,9 @@
     const data = JSON.parse(JSON.stringify(D));
     data.training = HS.store.list('training').map(({ readonly, ...x }) => x);
     data.sleep = HS.store.list('sleep').map(({ readonly, ...x }) => x);
+    const h = HS.health ? HS.health.data() : null;
+    if (h) data.appleHealth = { source: h.source, nights: h.nights, restingHR: h.restingHR, hrv: h.hrv };
+    if (!opts.sleep) delete data.appleHealth;
     if (!opts.body) delete data.bodyComposition;
     if (!opts.labs) delete data.checkups;
     if (!opts.training) delete data.training;

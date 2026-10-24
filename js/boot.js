@@ -3,7 +3,7 @@
   'use strict';
 
   const R = window.HSRemote;
-  const APP = ['core', 'store', 'charts', 'views/overview', 'views/body', 'views/labs', 'views/training-form', 'views/training', 'views/sleep', 'export', 'app'];
+  const APP = ['core', 'store', 'health-import', 'charts', 'views/overview', 'views/body', 'views/labs', 'views/training-form', 'views/training', 'views/sleep', 'export', 'app'];
   const gate = document.getElementById('gate');
   const esc = (s) => String(s == null ? '' : s).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
 
@@ -17,16 +17,21 @@
   const error = (msg) => (msg ? `<p class="gate-err" role="alert">${esc(msg)}</p>` : '');
 
   async function load(token) {
-    const [hd, an, tr, sl] = await Promise.all([
+    const [hd, an, tr, sl, ah] = await Promise.all([
       R.getFile(token, 'health-data.json'),
       R.getFile(token, 'analysis.json'),
       R.getFile(token, 'records/training.json', { allowMissing: true }),
       R.getFile(token, 'records/sleep.json', { allowMissing: true }),
+      R.getFile(token, 'records/apple-health.json', { allowMissing: true }),
     ]);
     return {
       data: hd.json,
       analysis: an.json,
-      records: { training: { items: tr.json || [], sha: tr.sha }, sleep: { items: sl.json || [], sha: sl.sha } },
+      records: {
+        training: { items: tr.json || [], sha: tr.sha },
+        sleep: { items: sl.json || [], sha: sl.sha },
+        appleHealth: ah.json,
+      },
     };
   }
 

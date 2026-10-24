@@ -146,6 +146,8 @@
       return { added, updated };
     },
     syncAll,
+    // 其他模組（例如 Apple Watch 匯入）更新數據後，通知畫面重畫
+    refresh: emit,
     // 表單草稿：只存在這台裝置，健身時頁面意外重新整理也不會遺失
     draft: {
       get(kind) { try { return JSON.parse(localStorage.getItem(DRAFT_KEY + kind)); } catch (e) { return null; } },

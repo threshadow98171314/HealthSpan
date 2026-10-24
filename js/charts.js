@@ -224,9 +224,43 @@
     }));
   }
 
+  // 堆疊長條（例如睡眠分期）：sets = [{ label, data, color }]；zones 畫在背景，對照總高度
+  function stack(canvas, { labels, sets, zones, unit }) {
+    if (!ok || !canvas) return null;
+    const c = prep();
+    return track(new Chart(canvas, {
+      type: 'bar',
+      data: {
+        labels,
+        datasets: sets.map((s, i) => ({
+          label: s.label, data: s.data, backgroundColor: css(s.color) || s.color,
+          borderColor: c.surface, borderWidth: { top: 1 }, borderSkipped: false,
+          borderRadius: i === sets.length - 1 ? { topLeft: 4, topRight: 4 } : 0, maxBarThickness: 30,
+        })),
+      },
+      options: {
+        interaction: { mode: 'index', intersect: false },
+        plugins: {
+          legend: { position: 'top', align: 'start', labels: { color: c.ink2, boxWidth: 12, boxHeight: 12 } },
+          zoneBands: { zones: zones || null },
+          tooltip: {
+            callbacks: {
+              label: (it) => `${it.dataset.label} ${it.raw} ${unit || ''}`,
+              footer: (items) => `合計 ${Math.round(items.reduce((a, it) => a + (it.dataset.label === '清醒' ? 0 : it.raw), 0) * 10) / 10} ${unit || ''}（不含清醒）`,
+            },
+          },
+        },
+        scales: {
+          x: { stacked: true, grid: { display: false }, border: { color: c.axis }, ticks: { color: c.ink2 } },
+          y: { stacked: true, beginAtZero: true, grace: '8%', ticks: { color: c.ink3, maxTicksLimit: 6 }, grid: { color: c.grid }, border: { display: false } },
+        },
+      },
+    }));
+  }
+
   function destroyAll() {
     live.splice(0).forEach((ch) => ch.destroy());
   }
 
-  HS.charts = { ok, trend, bars, radar, composition, destroyAll };
+  HS.charts = { ok, trend, bars, radar, composition, stack, destroyAll };
 })();
