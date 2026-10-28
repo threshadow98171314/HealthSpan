@@ -61,8 +61,10 @@
 
   const MESSAGES = { 401: '權杖無效或已過期', 403: '權杖沒有這個數據倉庫的權限', 404: '找不到數據倉庫或檔案' };
 
-  async function call(token, path, init = {}, accept = 'application/vnd.github+json') {
-    const url = `${API}${path}${init.method ? '' : `?ref=${CFG.branch}`}`;
+  // 讀寫倉庫內的檔案
+  const call = (token, path, init = {}, accept) => send(token, `${API}${path}${init.method ? '' : `?ref=${CFG.branch}`}`, init, accept);
+
+  async function send(token, url, init = {}, accept = 'application/vnd.github+json') {
     let res;
     try {
       res = await fetch(url, {
@@ -118,5 +120,17 @@
     return (await res.json()).content.sha;
   }
 
-  window.HSRemote = { CFG, vault, session, getText, getFile, putFile, listDir, deleteFile, RemoteError };
+  // iPhone 捷徑把 Apple Watch 數據以 Issue 的形式送進私人倉庫（捷徑只需要固定網址與一個標頭）
+  const ISSUES = `https://api.github.com/repos/${CFG.owner}/${CFG.repo}/issues`;
+
+  async function listIssues(token) {
+    const items = await (await send(token, `${ISSUES}?state=open&per_page=100&sort=created&direction=asc`)).json();
+    return Array.isArray(items) ? items.filter((x) => !x.pull_request) : [];
+  }
+
+  async function closeIssue(token, number) {
+    await send(token, `${ISSUES}/${number}`, { method: 'PATCH', body: JSON.stringify({ state: 'closed', state_reason: 'completed' }), headers: { 'Content-Type': 'application/json' } });
+  }
+
+  window.HSRemote = { CFG, vault, session, getText, getFile, putFile, listDir, deleteFile, listIssues, closeIssue, RemoteError };
 })();
